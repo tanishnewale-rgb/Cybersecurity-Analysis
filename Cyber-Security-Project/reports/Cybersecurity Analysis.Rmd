@@ -1,0 +1,157 @@
+---
+title: "Cyber Security MOOC Analysis"
+author: "Tanish Vikas Newale - 250204944"
+date: "January 2026"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(ProjectTemplate)
+
+
+tryCatch({
+    load.project()
+}, error = function(e) {
+    message("Standard load.project() failed, trying manual pathing...")
+})
+
+
+if (!exists("all_enrolments")) {
+  # List of possible paths to find the processed data
+  paths <- c("processed_data.RData", 
+             "../processed_data.RData", 
+             "data/processed_data.RData",
+             "../data/processed_data.RData")
+  
+  for (path in paths) {
+    if (file.exists(path)) {
+      load(path)
+      break
+    }
+  }
+}
+
+
+if (!exists("all_enrolments")) {
+  stop("CRITICAL ERROR: Data not found. 
+        1. Ensure munge.R has been run. 
+        2. Ensure processed_data.RData is in your main project folder.")
+}
+```
+
+Introduction
+This report analyzes learner data from the Newcastle University Cyber Security MOOC. The analysis follows the CRISP-DM methodology to generate insights for course stakeholders.
+
+CRISP-DM Cycle 1: Learner Demographics
+1. Business Understanding
+Objective: To identify the geographic origin and age profile of learners.
+
+
+Stakeholder Value: Understanding the demographics allows Newcastle University to tailor content localization and difficulty levels to the specific audience.
+
+2. Data Understanding
+
+Data Source: We utilize the enrolments datasets, which contain demographic details such as country, age_range, and gender. Data Quality: "Unknown" or missing values were identified in demographic columns and are filtered out to prevent skewing the results.
++1
+
+3. Modeling (Data Visualization)
+
+Visualization 1: Top 10 Countries
+
+```{r Top 10 Countries, echo=FALSE, message=FALSE, warning=FALSE}
+if(exists("all_enrolments")) {
+  all_enrolments %>%
+    count(country) %>%
+    filter(!is.na(country) & country != "" & country != "Unknown") %>%
+    slice_max(n, n = 10) %>% 
+    ggplot(aes(x = reorder(country, n), y = n)) +
+    geom_col(fill = "steelblue") +
+    coord_flip() +
+    theme_minimal() +
+    labs(title = "Top 10 Countries by Enrollment", 
+         x = "Country Code", 
+         y = "Total Learners")
+} else {
+  print("Data 'all_enrolments' not found. Please run munge.R first.")
+}
+```
+
+Visualization 2: Age Distribution
+
+```{r Age Distribution, echo=FALSE, message=FALSE, warning=FALSE}
+if(exists("all_enrolments")) {
+  age_col <- names(all_enrolments)[names(all_enrolments) %in% c("age", "age_range")][1]
+  
+  if(!is.na(age_col)) {
+    all_enrolments %>%
+      rename(target_age = !!age_col) %>%
+      filter(!is.na(target_age) & target_age != "" & target_age != "Unknown") %>%
+      ggplot(aes(x = target_age, fill = target_age)) +
+      geom_bar() +
+      theme_minimal() +
+      theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(title = "Learner Age Group Distribution", 
+           x = "Age Group", 
+           y = "Count")
+  } else {
+    print("Age column not found. Check names(all_enrolments) in Console.")
+  }
+}
+```
+
+4. Evaluation
+
+The analysis highlights that the majority of learners are from the UK (GB) and India (IN) and fall into the professional age range (26-45).
+
+CRISP-DM Cycle 2: Diversity & Engagement
+1. Business Understanding
+Research Question: How diverse is the learner base (Gender) and does engagement drop off over time (Weekly Activity)?
+
+
+Connection: Building on Cycle 1, we now investigate if the professional audience we identified is gender-balanced and whether they are completing the course.
+
+2. Modeling (Visualizations)
+
+Visualization 3: Gender Diversity
+
+```{r Gender Diversity, echo=FALSE, message=FALSE, warning=FALSE}
+if(exists("all_enrolments")) {
+  all_enrolments %>%
+    filter(!is.na(gender) & gender != "" & gender != "Unknown") %>%
+    ggplot(aes(x = gender, fill = gender)) +
+    geom_bar() +
+    theme_minimal() +
+    theme(legend.position = "none") +
+    labs(title = "Gender Distribution of Learners", 
+         x = "Gender", 
+         y = "Count")
+}
+```
+
+Visualization 4: Weekly Engagement
+
+### Visualization 4: Weekly Engagement
+```{r Weekly_Engagement, echo=FALSE, message=FALSE, warning=FALSE}
+num_col <- names(all_steps)[sapply(all_steps, is.numeric)][1]
+
+all_steps %>%
+  group_by(week_number) %>%
+  summarise(total = sum(.data[[num_col]], na.rm = TRUE)) %>%
+  ggplot(aes(x = factor(week_number), y = total, fill = factor(week_number))) +
+  geom_col() +
+  theme_minimal() +
+  labs(title = "Engagement Drop-off by Week",
+       x = "Week",
+       y = "Total Steps Completed")
+```
+
+3. Evaluation & Deployment
+Findings: The gender gap suggests male dominance in the course, and engagement drops significantly after Week 1.
+
+
+Deployment: Newcastle University should target female professionals in marketing campaigns and introduce "quick win" milestones in Week 2 to improve retention.

@@ -89,13 +89,13 @@ For a globally offered MOOC, demographic insights directly influence both academ
 Data Sources:
 The analysis draws on enrolment datasets generated during the MOOC registration process. Key variables include:
 
-Country of residence
+- Country of residence
 
-Age or age range
+- Age or age range
 
-Gender
+- Gender
 
-Data Quality Considerations:
+**Data Quality Considerations:**
 Initial exploration revealed the presence of missing, blank, or "Unknown" values within demographic fields. These entries were systematically filtered out to ensure that:
 
 Aggregate trends are not distorted
